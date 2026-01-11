@@ -1,15 +1,13 @@
 export default async function handler(req, res) {
-    // یوازې د POST غوښتنې منو ترڅو امنیت خوندي وي
     if (req.method !== 'POST') {
-        return res.status(405).json({ message: 'Only POST requests allowed' });
+        return res.status(405).json({ message: 'یوازې POST اجازه لري' });
     }
 
-    const { fileName, content, title, author, uploader } = req.body;
-    
-    // دا هغه ټوکن دی چې تا په Vercel Settings کې پټ کړی دی
+    const { fileName, content, folder } = req.body;
     const token = process.env.GITHUB_TOKEN; 
 
-    const url = `https://api.github.com/repos/rahmatalmi145-dotcom/my-books-library/contents/books/${fileName}`;
+    // دلته فولډر په ډینامیک ډول ټاکل کېږي (books یا covers)
+    const url = `https://api.github.com/repos/rahmatalmi145-dotcom/my-books-library/contents/${folder}/${fileName}`;
 
     try {
         const response = await fetch(url, {
@@ -19,7 +17,7 @@ export default async function handler(req, res) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: `نوی کتاب: ${title} د ${uploader} لخوا`,
+                message: `نوی فایل اپلوډ شو: ${fileName}`,
                 content: content
             })
         });
@@ -27,11 +25,11 @@ export default async function handler(req, res) {
         const data = await response.json();
 
         if (response.ok) {
-            res.status(200).json({ message: "کتاب په بریالیتوب سره GitHub ته واستول شو", data });
+            res.status(200).json({ message: "فایل په بریالیتوب سره واستول شو", data });
         } else {
-            res.status(response.status).json({ message: "GitHub خطا ورکړه", error: data });
+            res.status(response.status).json({ message: "GitHub تېروتنه وکړه", error: data });
         }
     } catch (error) {
-        res.status(500).json({ message: "سرور کې تخنیکي ستونزه ده", error: error.message });
+        res.status(500).json({ message: "سرور کې ستونزه ده", error: error.message });
     }
 }
